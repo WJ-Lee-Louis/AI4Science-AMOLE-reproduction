@@ -6,17 +6,35 @@ def parse_args():
     parser.add_argument("--device", type=int, default=3)
     parser.add_argument("--data_path", type=str, default="./data/PubChemSTM")
     parser.add_argument("--checkpoint_path", type=str, default="./model_checkpoints")
+    parser.add_argument("--seed", type=int, default=0)
 
     parser.add_argument("--dataset", type=str, default="TanimotoSTM", choices=["TanimotoSTM"])
     parser.add_argument("--model", type=str, default="AMOLE")
 
     parser.add_argument("--batch_size", type=int, default=45)
+    parser.add_argument(
+        "--aux_batch_size",
+        type=int,
+        default=0,
+        help="ER microbatch size; 0 evaluates the full training batch at once.",
+    )
     parser.add_argument("--text_lr", type=float, default=1e-5)
     parser.add_argument("--mol_lr", type=float, default=1e-5)
     parser.add_argument("--text_lr_scale", type=float, default=1.0)
     parser.add_argument("--mol_lr_scale", type=float, default=1.0)
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--epochs", type=int, default=30)
+    parser.add_argument(
+        "--max_steps_per_epoch",
+        type=int,
+        default=0,
+        help="Limit batches per epoch for smoke tests; 0 uses the full dataset.",
+    )
+    parser.add_argument(
+        "--no_save",
+        action="store_true",
+        help="Do not write checkpoints (intended for smoke tests).",
+    )
     parser.add_argument("--decay", type=float, default=0)
 
     parser.add_argument("--representation_frozen", dest='representation_frozen', action='store_true')
@@ -30,6 +48,21 @@ def parse_args():
     # For SciBERT
     parser.add_argument("--lm", type=str, default="SciBERT", choices=["SciBERT"])
     parser.add_argument("--max_seq_len", type=int, default=512)
+    parser.add_argument(
+        "--dynamic_padding",
+        action="store_true",
+        help="Pad each text batch to its longest sequence instead of always padding to max_seq_len.",
+    )
+    parser.add_argument(
+        "--gradient_checkpointing",
+        action="store_true",
+        help="Recompute SciBERT activations during backward to reduce GPU memory.",
+    )
+    parser.add_argument(
+        "--amp",
+        action="store_true",
+        help="Use CUDA automatic mixed precision to reduce GPU memory.",
+    )
 
     # For Graph Neural Networks
     parser.add_argument("--pretrain_gnn_mode", type=str, default="GraphMVP_G", choices=["GraphMVP_G"])

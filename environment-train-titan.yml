@@ -1,0 +1,32 @@
+name: amole-train-titan
+channels:
+  - pytorch
+  - pyg
+  - conda-forge
+dependencies:
+  # Python 3.9 keeps the original PyTorch/CUDA stack usable while avoiding EOL Python 3.7.
+  - python=3.9
+  - pytorch=1.10.1
+  - cudatoolkit=11.3
+  - pyg=2.0.3
+  - numpy=1.23.5
+  - mkl=2024.0
+  - pandas=1.5
+  - pyarrow=12
+  - scipy=1.9
+  - scikit-learn=1.2
+  - networkx=2.8
+  - tqdm=4.66
+  - pyyaml=6
+  - requests=2.31
+  - boto3
+  - tensorboardx=2.6
+  - pip
+  - pip:
+      - transformers==4.30.2
+      - tokenizers==0.13.3
+      - huggingface-hub==0.16.4
+      - ogb==1.2.0
+      - pytdc==0.4.1
+      - rdkit-pypi==2022.9.5
+      - fuzzywuzzy==0.18.0

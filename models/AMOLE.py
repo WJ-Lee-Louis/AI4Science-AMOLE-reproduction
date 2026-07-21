@@ -8,6 +8,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import torch.distributed as dist
+from torch.distributed.nn.functional import all_gather as differentiable_all_gather
+from torch.nn.parallel import DistributedDataParallel
+from contextlib import ExitStack
 
 import copy
 
@@ -39,6 +43,22 @@ class AMOLE_Trainer(trainer):
         freeze_network(self.ttext_model)
         self.distill_loss = nn.MSELoss()
 
+        if self.distributed:
+            self.molecule_model = nn.SyncBatchNorm.convert_sync_batchnorm(self.molecule_model)
+            ddp_kwargs = {
+                "device_ids": [args.device],
+                "output_device": args.device,
+                "broadcast_buffers": True,
+            }
+            self.text_model = DistributedDataParallel(self.text_model, **ddp_kwargs)
+            self.molecule_model = DistributedDataParallel(
+                self.molecule_model,
+                find_unused_parameters=True,
+                **ddp_kwargs,
+            )
+            self.text2latent = DistributedDataParallel(self.text2latent, **ddp_kwargs)
+            self.mol2latent = DistributedDataParallel(self.mol2latent, **ddp_kwargs)
+
         ##### Freeze model parameters #####
         if args.representation_frozen:
             freeze_network(self.text_model)
@@ -56,7 +76,20 @@ class AMOLE_Trainer(trainer):
             ]
         
         self.optimizer = optim.Adam(model_param_group, weight_decay=args.decay)
+        self.scaler = torch.cuda.amp.GradScaler(enabled=args.amp)
         self.optimal_loss = 1e10        
+
+    def gather_representations(self, tensor):
+        if not self.distributed:
+            return tensor
+        return torch.cat(differentiable_all_gather(tensor), dim=0)
+
+    def gather_without_grad(self, tensor):
+        if not self.distributed:
+            return tensor
+        gathered = [torch.empty_like(tensor) for _ in range(self.world_size)]
+        dist.all_gather(gathered, tensor.contiguous())
+        return torch.cat(gathered, dim=0)
     
 
     def get_text_repr_kd(self, text):
@@ -64,7 +97,12 @@ class AMOLE_Trainer(trainer):
         Get representation of molecular textual description with Language Models
         """
         text_tokens_ids, knowledge_masks, sentence_masks = prepare_text_tokens_kd(
-            device=self.device, description=text, tokenizer=self.text_tokenizer, max_seq_len=self.args.max_seq_len)
+            device=self.device,
+            description=text,
+            tokenizer=self.text_tokenizer,
+            max_seq_len=self.args.max_seq_len,
+            dynamic_padding=self.args.dynamic_padding,
+        )
         
         # Get Representation of Original Sentence
         text_output = self.text_model(input_ids=text_tokens_ids, attention_mask=knowledge_masks)
@@ -91,12 +129,18 @@ class AMOLE_Trainer(trainer):
     def train(self):
 
         for epoch in range(1, self.args.epochs + 1):
+
+            if self.sampler is not None:
+                self.sampler.set_epoch(epoch)
             
             start_time = time.time()
 
             accum_loss, accum_distill_loss, accum_acc = 0, 0, 0
 
-            for bc, samples in enumerate(tqdm(self.dataloader)):
+            for bc, samples in enumerate(tqdm(self.dataloader, disable=self.rank != 0)):
+
+                if self.args.max_steps_per_epoch > 0 and bc >= self.args.max_steps_per_epoch:
+                    break
 
                 self.optimizer.zero_grad()
 
@@ -105,39 +149,87 @@ class AMOLE_Trainer(trainer):
                 rand_molecule = samples[2]
                 aux_description = samples[3]
                 
-                ##### Forward Pass: Language Model #####
-                description_repr = self.get_text_repr(description)
+                defer_text_sync = self.distributed and self.args.alpha != 0
+                with ExitStack() as sync_stack:
+                    if defer_text_sync:
+                        sync_stack.enter_context(self.text_model.no_sync())
+                        sync_stack.enter_context(self.text2latent.no_sync())
 
-                ##### Forward Pass: Molecule Model #####
-                molecule_repr = self.get_molecule_repr(rand_molecule)
+                    with torch.cuda.amp.autocast(enabled=self.args.amp):
+                        ##### Forward Pass: Language Model #####
+                        description_repr = self.get_text_repr(description)
 
-                ##### Get Tanimoto Similarity between Molecules #####
-                tanimoto_mat = calc_tanimoto(molecule.fp.to(self.device), rand_molecule.fp)
+                        ##### Forward Pass: Molecule Model #####
+                        molecule_repr = self.get_molecule_repr(rand_molecule)
 
-                loss_01 = self.calc_S2P_Loss(description_repr, molecule_repr, tanimoto_mat)
-                loss_02 = self.calc_S2P_Loss(molecule_repr, description_repr, tanimoto_mat.T)
+                        all_description_repr = self.gather_representations(description_repr)
+                        all_molecule_repr = self.gather_representations(molecule_repr)
+                        original_fp = molecule.fp.to(self.device)
+                        augmented_fp = rand_molecule.fp.to(self.device)
+                        all_original_fp = self.gather_without_grad(original_fp)
+                        all_augmented_fp = self.gather_without_grad(augmented_fp)
 
-                ##### Auxiliary Forward Pass: Language Model #####
-                aux_description_repr, aux_knowledge_repr = self.get_text_repr_kd(aux_description)
+                        ##### Global in-batch Tanimoto soft targets #####
+                        tanimoto_text_to_mol = calc_tanimoto(original_fp, all_augmented_fp)
+                        tanimoto_mol_to_text = calc_tanimoto(augmented_fp, all_original_fp)
 
-                distill_loss = self.distill_loss(aux_description_repr, aux_knowledge_repr)
+                        loss_01 = self.calc_S2P_Loss(
+                            description_repr,
+                            all_molecule_repr,
+                            tanimoto_text_to_mol,
+                        )
+                        loss_02 = self.calc_S2P_Loss(
+                            molecule_repr,
+                            all_description_repr,
+                            tanimoto_mol_to_text,
+                        )
+                        loss = (loss_01 + loss_02) / 2
 
-                loss = (loss_01 + loss_02) / 2
-                total_loss = loss + self.args.alpha * distill_loss
-                
-                total_loss.backward()
-                self.optimizer.step()
+                    # S2P uses the global batch. Text gradients are synchronized
+                    # after the final ER microbatch; molecule gradients sync here.
+                    self.scaler.scale(loss).backward()
+
+                aux_batch_size = self.args.aux_batch_size or len(aux_description)
+                distill_loss_value = 0.0
+                aux_ranges = list(range(0, len(aux_description), aux_batch_size))
+                for aux_chunk_number, aux_start in enumerate(aux_ranges):
+                    aux_end = min(aux_start + aux_batch_size, len(aux_description))
+                    aux_chunk = aux_description[aux_start:aux_end]
+                    chunk_weight = len(aux_chunk) / len(aux_description)
+                    is_final_aux_chunk = aux_chunk_number == len(aux_ranges) - 1
+                    with ExitStack() as sync_stack:
+                        if self.distributed and not is_final_aux_chunk:
+                            sync_stack.enter_context(self.text_model.no_sync())
+                            sync_stack.enter_context(self.text2latent.no_sync())
+                        with torch.cuda.amp.autocast(enabled=self.args.amp):
+                            aux_description_repr, aux_knowledge_repr = self.get_text_repr_kd(aux_chunk)
+                            chunk_distill_loss = self.distill_loss(
+                                aux_description_repr,
+                                aux_knowledge_repr,
+                            )
+                        self.scaler.scale(
+                            self.args.alpha * chunk_weight * chunk_distill_loss
+                        ).backward()
+                    distill_loss_value += chunk_weight * chunk_distill_loss.item()
+
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
 
                 self.update_teacher_model()
 
                 accum_loss += loss.item()
-                accum_distill_loss += distill_loss.item()
+                accum_distill_loss += distill_loss_value
 
             temp_loss = accum_loss
-            if temp_loss < self.optimal_loss:
+            if self.distributed:
+                reduced_loss = torch.tensor(temp_loss, dtype=torch.float64, device=self.device)
+                dist.all_reduce(reduced_loss, op=dist.ReduceOp.SUM)
+                temp_loss = reduced_loss.item() / self.world_size
+            if not self.args.no_save and temp_loss < self.optimal_loss:
                 self.optimal_loss = temp_loss
                 self.save_model(epoch=epoch)
-            print("[Epoch {}] CL Loss: {:.5f}\tCL Acc: {:.5f}\tTime: {:.5f}".format(epoch, accum_loss, accum_acc, time.time() - start_time))
+            if self.rank == 0:
+                print("[Epoch {}] CL Loss: {:.5f}\tCL Acc: {:.5f}\tTime: {:.5f}".format(epoch, temp_loss, accum_acc, time.time() - start_time))
 
 
 if __name__ == "__main__":

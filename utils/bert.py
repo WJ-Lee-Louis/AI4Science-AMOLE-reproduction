@@ -26,7 +26,20 @@ def preprocess_each_sentence(sentence, tokenizer, max_seq_len):
     return [sentence_tokens_ids, sentence_masks]
 
 
-def prepare_text_tokens(device, description, tokenizer, max_seq_len):
+def prepare_text_tokens(device, description, tokenizer, max_seq_len, dynamic_padding=False):
+    if dynamic_padding:
+        text_input = tokenizer(
+            list(description),
+            truncation=True,
+            max_length=max_seq_len,
+            padding=True,
+            return_tensors='pt',
+        )
+        return (
+            text_input['input_ids'].long().to(device),
+            text_input['attention_mask'].bool().to(device),
+        )
+
     B = len(description)
     tokens_outputs = [preprocess_each_sentence(description[idx], tokenizer, max_seq_len) for idx in range(B)]
     tokens_ids = np.vstack([o[0] for o in tokens_outputs])
@@ -54,7 +67,29 @@ def preprocess_each_sentence_kd(sentence, tokenizer, max_seq_len):
     return [sentence_tokens_ids, knowledge_masks, sentence_masks]
 
 
-def prepare_text_tokens_kd(device, description, tokenizer, max_seq_len):
+def prepare_text_tokens_kd(device, description, tokenizer, max_seq_len, dynamic_padding=False):
+    if dynamic_padding:
+        text_input = tokenizer(
+            list(description),
+            truncation=True,
+            max_length=max_seq_len,
+            padding=True,
+            return_tensors='pt',
+        )
+        tokens_ids = text_input['input_ids'].long()
+        sentence_masks = text_input['attention_mask'].bool()
+        knowledge_masks = sentence_masks.clone()
+        for row in range(tokens_ids.shape[0]):
+            separator_positions = torch.where(tokens_ids[row] == tokenizer.sep_token_id)[0]
+            if len(separator_positions) == 0:
+                raise ValueError("Auxiliary text is missing the [SEP] token.")
+            knowledge_masks[row, separator_positions[0] + 1:] = False
+        return (
+            tokens_ids.to(device),
+            knowledge_masks.to(device),
+            sentence_masks.to(device),
+        )
+
     B = len(description)
     tokens_outputs = [preprocess_each_sentence_kd(description[idx], tokenizer, max_seq_len) for idx in range(B)]
     tokens_ids = np.vstack([o[0] for o in tokens_outputs])

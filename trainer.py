@@ -2,17 +2,20 @@ import os
 import datetime
 from tqdm import tqdm
 import numpy as np
+import random
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import torch.distributed as dist
 
 from utils.util import cycle_index, save
 
 # Call dataset
 from datasets import TanimotoSTM_Datasets_Graph
 from torch_geometric.loader import DataLoader as pyg_DataLoader
+from torch.utils.data.distributed import DistributedSampler
 
 from utils.argument import config2string
 from utils.bert import prepare_text_tokens
@@ -28,29 +31,77 @@ class trainer:
     def __init__(self, args):
         
         self.args = args
+        self.distributed = dist.is_available() and dist.is_initialized()
+        self.rank = dist.get_rank() if self.distributed else 0
+        self.world_size = dist.get_world_size() if self.distributed else 1
 
         d = datetime.datetime.now()
         date = d.strftime("%x")[-2:] + d.strftime("%x")[0:2] + d.strftime("%x")[3:5]
 
         self.config_str = "{}_".format(date) + config2string(args)
-        print("\n[Config] {}\n".format(self.config_str))
+        if self.rank == 0:
+            print("\n[Config] {}\n".format(self.config_str))
                 
         os.environ['TOKENIZERS_PARALLELISM'] = 'False'
-        os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
         # Select GPU device
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.device)
-        self.device = f'cuda:{args.device}' if torch.cuda.is_available() else "cpu"
+        if not torch.cuda.is_available():
+            raise RuntimeError("AMOLE pretraining requires a CUDA-capable GPU.")
+        if args.device < 0 or args.device >= torch.cuda.device_count():
+            raise ValueError(
+                f"Invalid logical CUDA device {args.device}; "
+                f"visible device count is {torch.cuda.device_count()}."
+            )
+        self.device = torch.device(f"cuda:{args.device}")
         torch.cuda.set_device(args.device)
         
         ##### Load Train Data #####
         dataloader_class = pyg_DataLoader
         if args.dataset == "TanimotoSTM":
-            self.dataset = TanimotoSTM_Datasets_Graph(args.data_path)
+            self.dataset = TanimotoSTM_Datasets_Graph(
+                args.data_path,
+                aug=args.p_aug,
+                num_cand=args.num_cand,
+            )
         else:
             raise Exception
 
-        self.dataloader = dataloader_class(self.dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
+        self.sampler = None
+        if self.distributed:
+            self.sampler = DistributedSampler(
+                self.dataset,
+                num_replicas=self.world_size,
+                rank=self.rank,
+                shuffle=True,
+                seed=args.seed,
+                drop_last=True,
+            )
+
+        generator = torch.Generator()
+        generator.manual_seed(args.seed + self.rank)
+
+        def seed_worker(worker_id):
+            worker_seed = torch.initial_seed() % 2**32
+            np.random.seed(worker_seed)
+            random.seed(worker_seed)
+
+        self.dataloader = dataloader_class(
+            self.dataset,
+            batch_size=args.batch_size,
+            shuffle=self.sampler is None,
+            sampler=self.sampler,
+            num_workers=args.num_workers,
+            drop_last=self.distributed,
+            worker_init_fn=seed_worker,
+            generator=generator,
+        )
+        if self.rank == 0 and self.distributed:
+            print(
+                f"[Distributed] world_size={self.world_size}, "
+                f"local_batch={args.batch_size}, "
+                f"global_batch={args.batch_size * self.world_size}, "
+                f"steps_per_epoch={len(self.dataloader)}"
+            )
 
     
     def build_LM(self, args):
@@ -59,8 +110,16 @@ class trainer:
         """
         if args.lm == "SciBERT":
             pretrained_SciBERT_folder = os.path.join(args.data_path, 'pretrained_SciBERT')
-            self.text_tokenizer = AutoTokenizer.from_pretrained('allenai/scibert_scivocab_uncased', cache_dir=pretrained_SciBERT_folder)
-            self.text_model = AutoModel.from_pretrained('allenai/scibert_scivocab_uncased', cache_dir=pretrained_SciBERT_folder).to(self.device)
+            self.text_tokenizer = AutoTokenizer.from_pretrained(
+                pretrained_SciBERT_folder,
+                local_files_only=True,
+            )
+            self.text_model = AutoModel.from_pretrained(
+                pretrained_SciBERT_folder,
+                local_files_only=True,
+            ).to(self.device)
+            if args.gradient_checkpointing:
+                self.text_model.gradient_checkpointing_enable()
             self.text_dim = 768
         else:
             raise Exception
@@ -90,7 +149,12 @@ class trainer:
         Get representation of molecular textual description with Language Models
         """
         text_tokens_ids, text_masks = prepare_text_tokens(
-            device=self.device, description=text, tokenizer=self.text_tokenizer, max_seq_len=self.args.max_seq_len)
+            device=self.device,
+            description=text,
+            tokenizer=self.text_tokenizer,
+            max_seq_len=self.args.max_seq_len,
+            dynamic_padding=self.args.dynamic_padding,
+        )
         text_output = self.text_model(input_ids=text_tokens_ids, attention_mask=text_masks)
         text_repr = text_output["pooler_output"]
         text_repr = self.text2latent(text_repr)
@@ -127,11 +191,17 @@ class trainer:
 
     def save_model(self, epoch = None):
 
-        save(self.args.checkpoint_path, "text", self.text_model, self.config_str)
-        save(self.args.checkpoint_path, "molecule", self.molecule_model, self.config_str)
+        if self.rank != 0:
+            return
+
+        def unwrap(model):
+            return model.module if hasattr(model, "module") else model
+
+        save(self.args.checkpoint_path, "text", unwrap(self.text_model), self.config_str)
+        save(self.args.checkpoint_path, "molecule", unwrap(self.molecule_model), self.config_str)
 
         if self.text2latent is not None:
-            save(self.args.checkpoint_path, "text2latent", self.text2latent, self.config_str)
+            save(self.args.checkpoint_path, "text2latent", unwrap(self.text2latent), self.config_str)
         
         if self.mol2latent is not None:
-            save(self.args.checkpoint_path, "mol2latent", self.mol2latent, self.config_str)
+            save(self.args.checkpoint_path, "mol2latent", unwrap(self.mol2latent), self.config_str)

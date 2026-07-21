@@ -8,6 +8,7 @@ import os
 
 import numpy as np
 import torch
+import torch.distributed as dist
 
 import resource
 rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
@@ -33,13 +34,23 @@ def seed_everything(seed=0):
 def pretrain():
 
     args, unknown = argument.parse_args()
-    seed_everything(0)
+    if unknown:
+        raise ValueError(f"Unknown command-line arguments: {unknown}")
+    world_size = int(os.environ.get("WORLD_SIZE", "1"))
+    if world_size > 1:
+        args.device = int(os.environ["LOCAL_RANK"])
+        dist.init_process_group(backend="nccl", init_method="env://")
+    seed_everything(args.seed)
 
-    if args.model == 'AMOLE':
-        from models import AMOLE_Trainer
-        model_trainer = AMOLE_Trainer(args)
-    
-    model_trainer.train()
+    try:
+        if args.model == 'AMOLE':
+            from models import AMOLE_Trainer
+            model_trainer = AMOLE_Trainer(args)
+
+        model_trainer.train()
+    finally:
+        if dist.is_initialized():
+            dist.destroy_process_group()
 
 
 if __name__ == "__main__":

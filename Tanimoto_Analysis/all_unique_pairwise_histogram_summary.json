@@ -1,0 +1,15 @@
+{
+  "status": "ok",
+  "molecules": 50000,
+  "self_pairs_excluded": true,
+  "symmetric_duplicates_removed": true,
+  "unique_pair_count": 1249975000,
+  "bin_width": 0.05,
+  "gpus": [
+    4,
+    5,
+    6,
+    7
+  ],
+  "elapsed_seconds": 6.949062824249268
+}

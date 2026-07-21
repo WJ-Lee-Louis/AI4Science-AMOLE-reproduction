@@ -1,0 +1,61 @@
+{
+  "scope": "Both all 1,249,975,000 unique molecule pairs and the 5,000,000 saved self-excluded top-100 similarities.",
+  "bin_width": 0.05,
+  "criteria": {
+    "isolated_extreme": "Minimum top-1 similarity; lower top-100 mean breaks ties.",
+    "spiky_high": "Among top-1 >= 0.8 and <=20 neighbors >=0.8, maximum mean(rank 1-5) minus mean(rank 21-100).",
+    "evenly_high": "Maximum rank-100 similarity; higher top-100 mean breaks ties."
+  },
+  "cases": [
+    {
+      "case": "isolated_extreme",
+      "molecule_id": 45881,
+      "cid": "6328544",
+      "canonical_smiles": "[210Po]",
+      "top1": 0.0625,
+      "top5_mean": 0.053838640451431274,
+      "top10_mean": 0.049863047897815704,
+      "median": 0.0317540317773819,
+      "mean": 0.0337153822183609,
+      "std": 0.006842868402600288,
+      "top100": 0.027027027681469917,
+      "count_ge_0_8": 0,
+      "count_ge_0_6": 0
+    },
+    {
+      "case": "spiky_high",
+      "molecule_id": 780,
+      "cid": "12054527",
+      "canonical_smiles": "ClC1=C(Cl)[C@]2(Cl)[C@@H]3[C@H]4O[C@H]4[C@@H](Cl)[C@@H]3[C@@]1(Cl)C2(Cl)Cl",
+      "top1": 1.0,
+      "top5_mean": 1.0,
+      "top10_mean": 0.7688888907432556,
+      "median": 0.13976743817329407,
+      "mean": 0.2446984052658081,
+      "std": 0.21269704401493073,
+      "top100": 0.12820513546466827,
+      "count_ge_0_8": 5,
+      "count_ge_0_6": 5
+    },
+    {
+      "case": "evenly_high",
+      "molecule_id": 280,
+      "cid": "91858902",
+      "canonical_smiles": "CC(=O)N[C@@H]1[C@@H](O)[C@H](O[C@@H]2O[C@H](CO)[C@@H](O[C@@H]3O[C@H](CO[C@H]4O[C@H](CO[C@H]5O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]5O[C@H]5O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]5O)[C@@H](O)[C@H](O[C@H]5O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]5O)[C@@H]4O)[C@@H](O)[C@H](O[C@H]4O[C@H](CO[C@H]5O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]5O[C@H]5O[C@H](CO)[C@@H](O)[C@H](O[C@H]6O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]6O)[C@@H]5O)[C@@H](O)[C@H](O)[C@@H]4O[C@H]4O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]4O[C@H]4O[C@H](CO)[C@@H](O)[C@H](O[C@H]5O[C@H](CO)[C@@H](O)[C@H](O)[C@@H]5O)[C@@H]4O)[C@@H]3O)[C@H](O)[C@H]2NC(C)=O)[C@@H](CO)O[C@H]1O",
+      "top1": 1.0,
+      "top5_mean": 1.0,
+      "top10_mean": 1.0,
+      "median": 0.9905660152435303,
+      "mean": 0.9905661940574646,
+      "std": 0.009433955885469913,
+      "top100": 0.9811320900917053,
+      "count_ge_0_8": 100,
+      "count_ge_0_6": 100
+    }
+  ],
+  "source": {
+    "path": "/home/dsail26s2/AMOLE/data/PubChemSTM_50k/processed/neighbors_top100.pt",
+    "sha256": "8abf346b5944d2825f59a50b3785cacda2bc1653cca0dc8eb4160e020d1bfbb7",
+    "molecule_order_sha256": "71a9ee97aca8dc57a146174cae6c793eb9e9c7a2e76db56c09e62cd6fab71e24"
+  }
+}
