@@ -82,6 +82,19 @@ def parse_args():
     # For Augmentation
     parser.add_argument("--p_aug", type=float, default=0.5)
     parser.add_argument("--num_cand", type=int, default=50)
+    parser.add_argument(
+        "--augmentation_strategy",
+        type=str,
+        default="baseline",
+        choices=["baseline", "curriculum", "stratified"],
+    )
+    parser.add_argument("--curriculum_start_k", type=int, default=10)
+    parser.add_argument("--curriculum_warmup_epochs", type=int, default=5)
+    parser.add_argument("--curriculum_rank_increment", type=int, default=4)
+    parser.add_argument("--stratified_min_similarity", type=float, default=0.25)
+    parser.add_argument("--stratified_high_probability", type=float, default=0.50)
+    parser.add_argument("--stratified_mid_probability", type=float, default=0.35)
+    parser.add_argument("--stratified_low_probability", type=float, default=0.15)
 
     # For Expertise Transfer
     parser.add_argument("--alpha", type=float, default=1.0)
@@ -99,7 +112,14 @@ def config2string(args):
                         'batch_size', 'text_lr_scale', 'mol_lr_scale', 'num_workers', 'decay', 'max_seq_len', 
                         'pretrain_gnn_mode', 'gnn_emb_dim', 'num_layer', 'JK', 'gnn_type', 'graph_pooling',
                         'SSL_emb_dim', 'CL_neg_samples', 'normalize', 
-                        'eval_task', 'test_mode', 'T_list']:
+                        'eval_task', 'test_mode', 'T_list',
+                        # The run directory records the curriculum policy. Keeping
+                        # these verbose fields out of each checkpoint basename also
+                        # avoids Linux's 255-byte filename limit.
+                        'augmentation_strategy', 'curriculum_start_k',
+                        'curriculum_warmup_epochs', 'curriculum_rank_increment',
+                        'stratified_min_similarity', 'stratified_high_probability',
+                        'stratified_mid_probability', 'stratified_low_probability']:
             st_ = "{}_{}_".format(name, val)
             st += st_
 

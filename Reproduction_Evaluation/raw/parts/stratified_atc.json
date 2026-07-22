@@ -1,0 +1,112 @@
+{
+  "strategy": "stratified",
+  "checkpoint_dir": "/home/dsail26s2/AMOLE/model_checkpoints/stratified_h50_m35_l15_min0p25_global30_e20_alpha1p0_seed0_gpu567",
+  "checkpoint_manifest": {
+    "text": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/stratified_h50_m35_l15_min0p25_global30_e20_alpha1p0_seed0_gpu567/text/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "0a002110894ff795431a91e7c785b2b3cf71de9ba6e82770a6cb96297a61d96c"
+    },
+    "molecule": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/stratified_h50_m35_l15_min0p25_global30_e20_alpha1p0_seed0_gpu567/molecule/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "6a2c47a6d40937e44bbbd5bbb10c6f156a46cace7191e760d2f98d04d4edc520"
+    },
+    "text2latent": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/stratified_h50_m35_l15_min0p25_global30_e20_alpha1p0_seed0_gpu567/text2latent/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "0310419433605c86d94b14c6cd5e5b0d120ccd526cc0eb49ca9877939b81e71a"
+    },
+    "mol2latent": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/stratified_h50_m35_l15_min0p25_global30_e20_alpha1p0_seed0_gpu567/mol2latent/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "1989e7d2bd5afb600ba6a7c898bbaf4e6e410bfe06abe7c38082f8afefaeceba"
+    }
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "T_list": [
+    4,
+    10,
+    20
+  ],
+  "max_seq_len": 512,
+  "datasets": {
+    "ATC": {
+      "size": 3007,
+      "metrics": {
+        "given_molecule": {
+          "4": {
+            "mean": 0.7065513801130695,
+            "std": 0.004939792385135264,
+            "trials": [
+              0.7126704356501496,
+              0.7063518456933822,
+              0.7090123046225474,
+              0.7070169604256734,
+              0.6977053541735949
+            ]
+          },
+          "10": {
+            "mean": 0.5562354506152312,
+            "std": 0.0020130024543294346,
+            "trials": [
+              0.5527103425340871,
+              0.5553708014632525,
+              0.5570335882939808,
+              0.5580312603924177,
+              0.5580312603924177
+            ]
+          },
+          "20": {
+            "mean": 0.46165613568340547,
+            "std": 0.003094034812002133,
+            "trials": [
+              0.4562687063518457,
+              0.46092450947788494,
+              0.4655803126039242,
+              0.46325241104090453,
+              0.4622547389424676
+            ]
+          }
+        },
+        "given_text": {
+          "4": {
+            "mean": 0.6814100432324575,
+            "std": 0.002506344354029492,
+            "trials": [
+              0.6797472564017293,
+              0.6784170269371467,
+              0.6804123711340206,
+              0.6854007316262055,
+              0.6830728300631859
+            ]
+          },
+          "10": {
+            "mean": 0.5269704023944131,
+            "std": 0.00238515744290537,
+            "trials": [
+              0.5261057532424344,
+              0.5231127369471233,
+              0.5304289990023279,
+              0.527435982707017,
+              0.5277685400731627
+            ]
+          },
+          "20": {
+            "mean": 0.4285999334885268,
+            "std": 0.004576260036386989,
+            "trials": [
+              0.42800133022946457,
+              0.4210176255404057,
+              0.43498503491852347,
+              0.43099434652477553,
+              0.42800133022946457
+            ]
+          }
+        }
+      }
+    }
+  }
+}

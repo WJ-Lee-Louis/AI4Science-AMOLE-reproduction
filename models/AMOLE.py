@@ -49,6 +49,7 @@ class AMOLE_Trainer(trainer):
                 "device_ids": [args.device],
                 "output_device": args.device,
                 "broadcast_buffers": True,
+                "gradient_as_bucket_view": True,
             }
             self.text_model = DistributedDataParallel(self.text_model, **ddp_kwargs)
             self.molecule_model = DistributedDataParallel(
@@ -132,17 +133,33 @@ class AMOLE_Trainer(trainer):
 
             if self.sampler is not None:
                 self.sampler.set_epoch(epoch)
+            self.dataset.set_epoch(epoch)
+            if self.rank == 0 and self.args.augmentation_strategy == "curriculum":
+                print(
+                    f"[Curriculum] epoch={epoch}, "
+                    f"sampling_pool=top-{self.dataset.get_candidate_count()}"
+                )
+            if self.rank == 0 and self.args.augmentation_strategy == "stratified":
+                high, mid, low = self.dataset.get_stratified_rank_groups()
+                print(
+                    "[Stratified] "
+                    f"high=ranks {high[0] + 1}-{high[-1] + 1} (p={self.args.stratified_high_probability:.2f}), "
+                    f"mid=ranks {mid[0] + 1}-{mid[-1] + 1} (p={self.args.stratified_mid_probability:.2f}), "
+                    f"low=ranks {low[0] + 1}-{low[-1] + 1} (p={self.args.stratified_low_probability:.2f}), "
+                    f"minimum_similarity={self.args.stratified_min_similarity:.2f}"
+                )
             
             start_time = time.time()
 
             accum_loss, accum_distill_loss, accum_acc = 0, 0, 0
+            completed_steps = 0
 
             for bc, samples in enumerate(tqdm(self.dataloader, disable=self.rank != 0)):
 
                 if self.args.max_steps_per_epoch > 0 and bc >= self.args.max_steps_per_epoch:
                     break
 
-                self.optimizer.zero_grad()
+                self.optimizer.zero_grad(set_to_none=True)
 
                 description = samples[0]
                 molecule = samples[1]
@@ -219,17 +236,39 @@ class AMOLE_Trainer(trainer):
 
                 accum_loss += loss.item()
                 accum_distill_loss += distill_loss_value
+                completed_steps += 1
+
+            if completed_steps == 0:
+                raise RuntimeError("No training steps were completed in this epoch")
 
             temp_loss = accum_loss
+            temp_distill_loss = accum_distill_loss
             if self.distributed:
-                reduced_loss = torch.tensor(temp_loss, dtype=torch.float64, device=self.device)
-                dist.all_reduce(reduced_loss, op=dist.ReduceOp.SUM)
-                temp_loss = reduced_loss.item() / self.world_size
+                reduced_losses = torch.tensor(
+                    [temp_loss, temp_distill_loss],
+                    dtype=torch.float64,
+                    device=self.device,
+                )
+                dist.all_reduce(reduced_losses, op=dist.ReduceOp.SUM)
+                temp_loss, temp_distill_loss = (
+                    reduced_losses / self.world_size
+                ).tolist()
             if not self.args.no_save and temp_loss < self.optimal_loss:
                 self.optimal_loss = temp_loss
                 self.save_model(epoch=epoch)
             if self.rank == 0:
-                print("[Epoch {}] CL Loss: {:.5f}\tCL Acc: {:.5f}\tTime: {:.5f}".format(epoch, temp_loss, accum_acc, time.time() - start_time))
+                mean_s2p_loss = temp_loss / completed_steps
+                mean_er_loss = temp_distill_loss / completed_steps
+                weighted_er_loss = self.args.alpha * mean_er_loss
+                mean_total_loss = mean_s2p_loss + weighted_er_loss
+                print(
+                    f"[Epoch {epoch}] CL Loss: {temp_loss:.5f}\t"
+                    f"S2P Mean: {mean_s2p_loss:.5f}\t"
+                    f"ER Mean: {mean_er_loss:.5f}\t"
+                    f"Weighted ER Mean: {weighted_er_loss:.5f}\t"
+                    f"Total Mean: {mean_total_loss:.5f}\t"
+                    f"CL Acc: {accum_acc:.5f}\tTime: {time.time() - start_time:.5f}"
+                )
 
 
 if __name__ == "__main__":

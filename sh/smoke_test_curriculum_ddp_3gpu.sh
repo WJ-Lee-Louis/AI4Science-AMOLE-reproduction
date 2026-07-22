@@ -4,20 +4,10 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_PREFIX="${ENV_PREFIX:-/home/dsail26s2/envs/amole-train-titan}"
 TORCHRUN="${TORCHRUN:-${ENV_PREFIX}/bin/torchrun}"
-GPU_IDS="${GPU_IDS:-5,6,7}"
+GPU_IDS="${GPU_IDS:-1,2,3}"
 LOCAL_BATCH_SIZE="${LOCAL_BATCH_SIZE:-10}"
 MAX_STEPS="${MAX_STEPS:-2}"
-MAX_SEQ_LEN="${MAX_SEQ_LEN:-512}"
-AUX_BATCH_SIZE="${AUX_BATCH_SIZE:-8}"
-MASTER_PORT="${MASTER_PORT:-29558}"
-NUM_WORKERS="${NUM_WORKERS:-0}"
-SAVE_CHECKPOINTS="${SAVE_CHECKPOINTS:-0}"
-SMOKE_CHECKPOINT_PATH="${SMOKE_CHECKPOINT_PATH:-./model_checkpoints/ddp_smoke_test}"
-
-SAVE_ARGS=(--no_save)
-if [[ "${SAVE_CHECKPOINTS}" == "1" ]]; then
-  SAVE_ARGS=(--checkpoint_path "${SMOKE_CHECKPOINT_PATH}")
-fi
+MASTER_PORT="${MASTER_PORT:-29568}"
 
 cd "${REPO_ROOT}"
 export CUDA_VISIBLE_DEVICES="${GPU_IDS}"
@@ -33,13 +23,13 @@ export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb:128
   --master_port="${MASTER_PORT}" \
   pretrain.py \
   --lm SciBERT \
-  --max_seq_len "${MAX_SEQ_LEN}" \
+  --max_seq_len 512 \
   --dynamic_padding \
   --gradient_checkpointing \
   --amp \
   --epochs 1 \
   --max_steps_per_epoch "${MAX_STEPS}" \
-  "${SAVE_ARGS[@]}" \
+  --no_save \
   --text_lr 1e-5 \
   --mol_lr 1e-5 \
   --model AMOLE \
@@ -49,10 +39,13 @@ export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb:128
   --T 0.1 \
   --p_aug 0.5 \
   --num_cand 50 \
-  --augmentation_strategy baseline \
+  --augmentation_strategy curriculum \
+  --curriculum_start_k 10 \
+  --curriculum_warmup_epochs 5 \
+  --curriculum_rank_increment 4 \
   --batch_size "${LOCAL_BATCH_SIZE}" \
-  --aux_batch_size "${AUX_BATCH_SIZE}" \
-  --num_workers "${NUM_WORKERS}" \
+  --aux_batch_size 8 \
+  --num_workers 0 \
   --alpha 1.0 \
   --seed 0 \
   --device 0

@@ -1,0 +1,187 @@
+{
+  "strategy": "curriculum_alpha2",
+  "checkpoint_dir": "/home/dsail26s2/AMOLE/model_checkpoints/curriculum_rank_expand_top10_to50_global30_e20_alpha2p0_seed0_gpu234",
+  "checkpoint_manifest": {
+    "text": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/curriculum_rank_expand_top10_to50_global30_e20_alpha2p0_seed0_gpu234/text/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_2.0.pth",
+      "sha256": "f58547776bde0a5c8cca2dabc16bfe734027f5da440df84e4ee28b99a2421377"
+    },
+    "molecule": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/curriculum_rank_expand_top10_to50_global30_e20_alpha2p0_seed0_gpu234/molecule/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_2.0.pth",
+      "sha256": "e203b6025c400f2c87beb2633df2a65c87c63b916785dc80eb06044ee63cf926"
+    },
+    "text2latent": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/curriculum_rank_expand_top10_to50_global30_e20_alpha2p0_seed0_gpu234/text2latent/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_2.0.pth",
+      "sha256": "6c74ca7a9699f15cf3033a98100be1b32ce250f936f934fc716640ad37d2dc10"
+    },
+    "mol2latent": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/curriculum_rank_expand_top10_to50_global30_e20_alpha2p0_seed0_gpu234/mol2latent/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_2.0.pth",
+      "sha256": "fda86a11e6eb3666908e10320646dba090612821887319973564b85ab31def05"
+    }
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "T_list": [
+    4,
+    10,
+    20
+  ],
+  "max_seq_len": 512,
+  "datasets": {
+    "description": {
+      "size": 1154,
+      "metrics": {
+        "given_molecule": {
+          "4": {
+            "mean": 0.9143847487001733,
+            "std": 0.005758491412768165,
+            "trials": [
+              0.9194107452339688,
+              0.9064124783362218,
+              0.9090121317157712,
+              0.915944540727903,
+              0.9211438474870017
+            ]
+          },
+          "10": {
+            "mean": 0.847833622183709,
+            "std": 0.00810306393591749,
+            "trials": [
+              0.8492201039861352,
+              0.8405545927209706,
+              0.8396880415944541,
+              0.8474870017331022,
+              0.8622183708838822
+            ]
+          },
+          "20": {
+            "mean": 0.7937608318890814,
+            "std": 0.005589086827243362,
+            "trials": [
+              0.7989601386481803,
+              0.7850953206239168,
+              0.7920277296360485,
+              0.7920277296360485,
+              0.8006932409012132
+            ]
+          }
+        },
+        "given_text": {
+          "4": {
+            "mean": 0.9048526863084921,
+            "std": 0.006424177813813041,
+            "trials": [
+              0.9090121317157712,
+              0.8951473136915078,
+              0.9064124783362218,
+              0.9003466204506065,
+              0.9133448873483535
+            ]
+          },
+          "10": {
+            "mean": 0.8341421143847487,
+            "std": 0.0036600887490369034,
+            "trials": [
+              0.8336221837088388,
+              0.8275563258232236,
+              0.8370883882149047,
+              0.8344887348353552,
+              0.8379549393414212
+            ]
+          },
+          "20": {
+            "mean": 0.781109185441941,
+            "std": 0.0044726127904901065,
+            "trials": [
+              0.7746967071057193,
+              0.7868284228769498,
+              0.7842287694974004,
+              0.7824956672443674,
+              0.7772963604852686
+            ]
+          }
+        }
+      }
+    },
+    "pharmacodynamics": {
+      "size": 1005,
+      "metrics": {
+        "given_molecule": {
+          "4": {
+            "mean": 0.8533333333333333,
+            "std": 0.0037017065149728,
+            "trials": [
+              0.8567164179104477,
+              0.8477611940298507,
+              0.8577114427860697,
+              0.8507462686567164,
+              0.8537313432835821
+            ]
+          },
+          "10": {
+            "mean": 0.7649751243781094,
+            "std": 0.003950135968413784,
+            "trials": [
+              0.7631840796019901,
+              0.7681592039800995,
+              0.7661691542288557,
+              0.7691542288557214,
+              0.7582089552238805
+            ]
+          },
+          "20": {
+            "mean": 0.684776119402985,
+            "std": 0.010742582747276255,
+            "trials": [
+              0.6935323383084577,
+              0.6935323383084577,
+              0.6935323383084577,
+              0.672636815920398,
+              0.6706467661691542
+            ]
+          }
+        },
+        "given_text": {
+          "4": {
+            "mean": 0.8354228855721393,
+            "std": 0.008688111424056942,
+            "trials": [
+              0.8427860696517413,
+              0.8278606965174129,
+              0.8487562189054726,
+              0.8278606965174129,
+              0.8298507462686567
+            ]
+          },
+          "10": {
+            "mean": 0.7369154228855722,
+            "std": 0.007799370325279751,
+            "trials": [
+              0.745273631840796,
+              0.7333333333333333,
+              0.7293532338308458,
+              0.7293532338308458,
+              0.7472636815920398
+            ]
+          },
+          "20": {
+            "mean": 0.6587064676616915,
+            "std": 0.008009795740297743,
+            "trials": [
+              0.6666666666666666,
+              0.6557213930348259,
+              0.6497512437810945,
+              0.6517412935323383,
+              0.6696517412935323
+            ]
+          }
+        }
+      }
+    }
+  }
+}

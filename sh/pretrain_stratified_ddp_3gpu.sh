@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_PREFIX="${ENV_PREFIX:-/home/dsail26s2/envs/amole-train-titan}"
 TORCHRUN="${TORCHRUN:-${ENV_PREFIX}/bin/torchrun}"
-GPU_IDS="${GPU_IDS:-5,6,7}"
+GPU_IDS="${GPU_IDS:-4,5,6}"
 LOCAL_BATCH_SIZE="${LOCAL_BATCH_SIZE:-10}"
 GLOBAL_BATCH_SIZE=$((LOCAL_BATCH_SIZE * 3))
 EPOCHS="${EPOCHS:-20}"
@@ -13,10 +13,15 @@ AUX_BATCH_SIZE="${AUX_BATCH_SIZE:-8}"
 NUM_WORKERS="${NUM_WORKERS:-2}"
 SEED="${SEED:-0}"
 ALPHA="${ALPHA:-1.0}"
-MASTER_PORT="${MASTER_PORT:-29557}"
+MIN_SIMILARITY="${MIN_SIMILARITY:-0.25}"
+HIGH_PROBABILITY="${HIGH_PROBABILITY:-0.50}"
+MID_PROBABILITY="${MID_PROBABILITY:-0.35}"
+LOW_PROBABILITY="${LOW_PROBABILITY:-0.15}"
+MASTER_PORT="${MASTER_PORT:-29577}"
 GPU_TAG="${GPU_IDS//,/}"
 ALPHA_TAG="${ALPHA//./p}"
-RUN_NAME="${RUN_NAME:-baseline_ddp3_global${GLOBAL_BATCH_SIZE}_e${EPOCHS}_seq${MAX_SEQ_LEN}_alpha${ALPHA_TAG}_seed${SEED}_gpu${GPU_TAG}}"
+MIN_SIMILARITY_TAG="${MIN_SIMILARITY//./p}"
+RUN_NAME="${RUN_NAME:-stratified_h50_m35_l15_min${MIN_SIMILARITY_TAG}_global${GLOBAL_BATCH_SIZE}_e${EPOCHS}_alpha${ALPHA_TAG}_seed${SEED}_gpu${GPU_TAG}}"
 CHECKPOINT_PATH="${CHECKPOINT_PATH:-./model_checkpoints/${RUN_NAME}}"
 LOG_DIR="${LOG_DIR:-./logs}"
 
@@ -56,7 +61,11 @@ export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-max_split_size_mb:128
   --T 0.1 \
   --p_aug 0.5 \
   --num_cand 50 \
-  --augmentation_strategy baseline \
+  --augmentation_strategy stratified \
+  --stratified_min_similarity "${MIN_SIMILARITY}" \
+  --stratified_high_probability "${HIGH_PROBABILITY}" \
+  --stratified_mid_probability "${MID_PROBABILITY}" \
+  --stratified_low_probability "${LOW_PROBABILITY}" \
   --batch_size "${LOCAL_BATCH_SIZE}" \
   --aux_batch_size "${AUX_BATCH_SIZE}" \
   --num_workers "${NUM_WORKERS}" \

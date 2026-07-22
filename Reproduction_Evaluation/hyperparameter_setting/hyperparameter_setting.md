@@ -1,0 +1,27 @@
+# Hyperparameter specifications for AMOLE reproduction pretraining
+
+| Hyperparameter | Value |
+| --- | --- |
+| Training epochs | 20 |
+| Optimizer | Adam |
+| Learning rate for text encoder f_{text} | 1 \times 10^{-5} |
+| Learning rate for molecule encoder f_{mol} | 1 \times 10^{-5} |
+| Weight decay | 0 |
+| Global batch size | 30 (10 per GPU × 3 GPUs) |
+| Maximum text sequence length | 512 tokens (dynamic padding) |
+| Text encoder | SciBERT |
+| Molecule encoder | 5-layer GIN, 300-d, mean pooling |
+| Shared latent dimension | 256 |
+| Temperature for pseudo-label \tau_1 | 0.1 |
+| Temperature for model prediction \tau_2 | 0.1 |
+| Maximum number of similar molecules k | 50 |
+| Replacement probability p | 0.5 |
+| Weight of expertise reconstruction loss \alpha | 1.0 |
+| ER microbatch size | 8 per GPU |
+| Molecular fingerprint | Morgan, radius 2, 1024 bits |
+| Random seed | 0 |
+| Training precision | Automatic mixed precision (AMP) |
+| Baseline augmentation policy | Uniform sampling from top-50 |
+| Curriculum augmentation policy | Top-10 (ep. 1–5); +4/epoch (ep. 6–15); top-50 (ep. 16–20) |
+
+Both completed baseline and curriculum runs used the same common settings. Only the augmentation policy differed.

@@ -1,0 +1,12 @@
+/home/dsail26s2/envs/amole-train-titan/lib/python3.9/site-packages/torch/torch_version.py:3: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import packaging  # type: ignore[attr-defined]
+Some weights of the model checkpoint at data/PubChemSTM/pretrained_SciBERT were not used when initializing BertModel: ['cls.predictions.transform.LayerNorm.weight', 'cls.predictions.bias', 'cls.seq_relationship.bias', 'cls.predictions.decoder.bias', 'cls.predictions.transform.LayerNorm.bias', 'cls.predictions.transform.dense.weight', 'cls.seq_relationship.weight', 'cls.predictions.decoder.weight', 'cls.predictions.transform.dense.bias']
+- This IS expected if you are initializing BertModel from the checkpoint of a model trained on another task or with another architecture (e.g. initializing a BertForSequenceClassification model from a BertForPreTraining model).
+- This IS NOT expected if you are initializing BertModel from the checkpoint of a model that you expect to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model).
+[baseline] encoding description
+[baseline] description given_molecule @20: 79.58 +/- 0.74
+[baseline] description given_text @20: 78.35 +/- 0.64
+[baseline] encoding pharmacodynamics
+[baseline] pharmacodynamics given_molecule @20: 68.44 +/- 0.91
+[baseline] pharmacodynamics given_text @20: 65.93 +/- 0.58
+Saved Reproduction_Evaluation/raw/parts/baseline_text.json

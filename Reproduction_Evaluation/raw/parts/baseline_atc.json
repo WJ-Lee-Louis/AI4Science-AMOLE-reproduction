@@ -1,0 +1,112 @@
+{
+  "strategy": "baseline",
+  "checkpoint_dir": "/home/dsail26s2/AMOLE/model_checkpoints/baseline_ddp3_global30_e20_seq512_seed0_gpu567",
+  "checkpoint_manifest": {
+    "text": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/baseline_ddp3_global30_e20_seq512_seed0_gpu567/text/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "510a1d7035c74d806debc766524a709ab16422e9e2e3c1b73a6becfe02dcd772"
+    },
+    "molecule": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/baseline_ddp3_global30_e20_seq512_seed0_gpu567/molecule/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "5ebba86814cf121317f2b250f652dc9270371a31a59328d1b463b7e44dc56bbc"
+    },
+    "text2latent": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/baseline_ddp3_global30_e20_seq512_seed0_gpu567/text2latent/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "27f05c9d5c7f6b1b6dc100d6ffc633e06dd1b55936ef75eb19af7208369089d7"
+    },
+    "mol2latent": {
+      "path": "/home/dsail26s2/AMOLE/model_checkpoints/baseline_ddp3_global30_e20_seq512_seed0_gpu567/mol2latent/260722_dataset_TanimotoSTM_model_AMOLE_aux_batch_size_8_text_lr_1e-05_mol_lr_1e-05_epochs_20_lm_SciBERT_dynamic_padding_True_gradient_checkpointing_True_amp_True_T_0.1_target_T_0.1_p_aug_0.5_num_cand_50_alpha_1.0.pth",
+      "sha256": "e26841c97715e31a7151213210e8e31707785778eae188bc3943965f1a7d2aa8"
+    }
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "T_list": [
+    4,
+    10,
+    20
+  ],
+  "max_seq_len": 512,
+  "datasets": {
+    "ATC": {
+      "size": 3007,
+      "metrics": {
+        "given_molecule": {
+          "4": {
+            "mean": 0.7166611240438977,
+            "std": 0.0015598323112149658,
+            "trials": [
+              0.7166611240438976,
+              0.7146657798470236,
+              0.7193215829730628,
+              0.7169936814100433,
+              0.7156634519454605
+            ]
+          },
+          "10": {
+            "mean": 0.5652144995011639,
+            "std": 0.0037542177031380276,
+            "trials": [
+              0.5636847356168939,
+              0.5630196208846026,
+              0.5640172929830396,
+              0.562687063518457,
+              0.5726637845028267
+            ]
+          },
+          "20": {
+            "mean": 0.47070169604256734,
+            "std": 0.0017546931770233431,
+            "trials": [
+              0.47156634519454604,
+              0.4728965746591287,
+              0.4679082141669438,
+              0.46957100099767207,
+              0.47156634519454604
+            ]
+          }
+        },
+        "given_text": {
+          "4": {
+            "mean": 0.6833388759561025,
+            "std": 0.0048712559823346656,
+            "trials": [
+              0.6787495843032924,
+              0.6847356168939142,
+              0.6920518789491187,
+              0.679082141669438,
+              0.6820751579647489
+            ]
+          },
+          "10": {
+            "mean": 0.5269704023944131,
+            "std": 0.004582056441543035,
+            "trials": [
+              0.5277685400731627,
+              0.5237778516794147,
+              0.5354173594945129,
+              0.5224476222148321,
+              0.525440638510143
+            ]
+          },
+          "20": {
+            "mean": 0.433787828400399,
+            "std": 0.007078395848028481,
+            "trials": [
+              0.4363152643831061,
+              0.42800133022946457,
+              0.44662454273362157,
+              0.42899900232790156,
+              0.42899900232790156
+            ]
+          }
+        }
+      }
+    }
+  }
+}

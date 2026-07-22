@@ -36,6 +36,7 @@ export CUDA_VISIBLE_DEVICES="${GPU_ID}"
   --T 0.1 \
   --p_aug 0.5 \
   --num_cand 50 \
+  --augmentation_strategy baseline \
   --batch_size "${BATCH_SIZE}" \
   --aux_batch_size "${AUX_BATCH_SIZE}" \
   --num_workers "${NUM_WORKERS}" \

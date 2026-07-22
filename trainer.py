@@ -62,6 +62,14 @@ class trainer:
                 args.data_path,
                 aug=args.p_aug,
                 num_cand=args.num_cand,
+                augmentation_strategy=args.augmentation_strategy,
+                curriculum_start_k=args.curriculum_start_k,
+                curriculum_warmup_epochs=args.curriculum_warmup_epochs,
+                curriculum_rank_increment=args.curriculum_rank_increment,
+                stratified_min_similarity=args.stratified_min_similarity,
+                stratified_high_probability=args.stratified_high_probability,
+                stratified_mid_probability=args.stratified_mid_probability,
+                stratified_low_probability=args.stratified_low_probability,
             )
         else:
             raise Exception

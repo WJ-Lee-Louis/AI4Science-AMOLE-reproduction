@@ -85,7 +85,6 @@ def bin_labels(frame: pd.DataFrame) -> list[str]:
 
 def save_figure(figure: plt.Figure, base: Path) -> None:
     figure.savefig(base.with_suffix(".png"), dpi=220, bbox_inches="tight", facecolor="white")
-    figure.savefig(base.with_suffix(".pdf"), bbox_inches="tight", facecolor="white")
     plt.close(figure)
 
 
@@ -109,6 +108,35 @@ def plot_overall(frame: pd.DataFrame, values: np.ndarray, output_dir: Path) -> N
     style_axis(axis)
     figure.tight_layout()
     save_figure(figure, output_dir / "01_overall_top100_similarity_distribution")
+
+
+def plot_top50(
+    frame: pd.DataFrame,
+    values: np.ndarray,
+    output_dir: Path,
+    minimum_similarity: float = 0.25,
+) -> None:
+    figure, axis = plt.subplots(figsize=(13, 6.5))
+    positions = np.arange(len(frame))
+    axis.bar(positions, frame.percent, color="#3B6FB6", width=0.86)
+    axis.set_xticks(positions, bin_labels(frame), rotation=50, ha="right")
+    axis.set_ylabel("Share of saved top-50 similarities (%)")
+    axis.set_xlabel("Tanimoto similarity interval")
+    axis.set_title("Distribution of 2,500,000 Saved Top-50 Tanimoto Similarities", pad=14, weight="bold")
+    axis.text(
+        0.99,
+        0.96,
+        f"50,000 molecules × 50 neighbors\n"
+        f"Median={np.median(values):.3f}  Mean={np.mean(values):.3f}\n"
+        f"≥{minimum_similarity:.2f}: {100 * np.mean(values >= minimum_similarity):.2f}%",
+        transform=axis.transAxes,
+        ha="right",
+        va="top",
+        bbox={"boxstyle": "round,pad=0.45", "facecolor": "white", "edgecolor": "#BBBBBB"},
+    )
+    style_axis(axis)
+    figure.tight_layout()
+    save_figure(figure, output_dir / "04_overall_top50_similarity_distribution")
 
 
 def plot_all_pairs(frame: pd.DataFrame, output_dir: Path) -> None:
@@ -254,6 +282,11 @@ def main() -> None:
     overall.to_csv(args.output_dir / "overall_top100_histogram.csv", index=False)
     plot_overall(overall, scores.ravel(), args.output_dir)
 
+    top50_values = scores[:, :50].ravel()
+    top50 = histogram_frame(top50_values, bins)
+    top50.to_csv(args.output_dir / "overall_top50_histogram.csv", index=False)
+    plot_top50(top50, top50_values, args.output_dir)
+
     cases = choose_cases(scores)
     summaries: list[dict[str, Any]] = []
     neighbor_rows: list[dict[str, Any]] = []
@@ -282,6 +315,13 @@ def main() -> None:
     selection = {
         "scope": "Both all 1,249,975,000 unique molecule pairs and the 5,000,000 saved self-excluded top-100 similarities.",
         "bin_width": args.bin_width,
+        "top50": {
+            "count": int(top50_values.size),
+            "mean": float(top50_values.mean()),
+            "median": float(np.median(top50_values)),
+            "proposed_minimum_similarity": 0.25,
+            "fraction_at_or_above_minimum": float(np.mean(top50_values >= 0.25)),
+        },
         "criteria": {
             "isolated_extreme": "Minimum top-1 similarity; lower top-100 mean breaks ties.",
             "spiky_high": "Among top-1 >= 0.8 and <=20 neighbors >=0.8, maximum mean(rank 1-5) minus mean(rank 21-100).",
@@ -299,7 +339,9 @@ def main() -> None:
         "# Tanimoto top-100 analysis\n\n"
         "This directory separately analyzes all 1,249,975,000 unique molecule pairs and the 5,000,000 "
         "saved self-excluded top-100 similarities. Histogram bins have width 0.05. Case-selection criteria and exact "
-        "molecule metadata are recorded in `analysis_summary.json`; all plot values are also exported as CSV.\n"
+        "molecule metadata are recorded in `analysis_summary.json`; all plot values are also exported as CSV. "
+        "The top-50 candidate distribution is provided separately with the proposed 0.25 minimum-similarity "
+        "threshold marked on the plot.\n"
     )
     print(json.dumps(selection, indent=2))
 

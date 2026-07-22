@@ -1,6 +1,13 @@
 {
   "scope": "Both all 1,249,975,000 unique molecule pairs and the 5,000,000 saved self-excluded top-100 similarities.",
   "bin_width": 0.05,
+  "top50": {
+    "count": 2500000,
+    "mean": 0.4063122570514679,
+    "median": 0.3484848439693451,
+    "proposed_minimum_similarity": 0.25,
+    "fraction_at_or_above_minimum": 0.8969972
+  },
   "criteria": {
     "isolated_extreme": "Minimum top-1 similarity; lower top-100 mean breaks ties.",
     "spiky_high": "Among top-1 >= 0.8 and <=20 neighbors >=0.8, maximum mean(rank 1-5) minus mean(rank 21-100).",
