@@ -1,9 +1,8 @@
 # AMOLE reproduction: zero-shot cross-modal retrieval
 
-This directory compares four completed global-batch-30 checkpoints: baseline
-with alpha 1.0, rank-expansion curriculum with alpha 1.0, similarity-aware
-stratified augmentation with alpha 1.0, and rank-expansion curriculum with
-alpha 2.0.
+This directory compares six completed global-batch-30 checkpoints: baseline,
+rank-expansion curriculum, and similarity-aware stratified augmentation, each
+trained with alpha 1.0 and alpha 2.0.
 
 ## Evaluation protocol
 
@@ -37,8 +36,9 @@ Dataset sizes:
 - `retrieval_all_metrics.csv`: all @4/@10/@20 means, standard deviations, and
   per-trial values.
 - `retrieval_deltas_vs_baseline.csv`: paired method-minus-baseline differences.
-- `raw/baseline.json`, `raw/curriculum.json`, `raw/stratified.json`, and
-  `raw/curriculum_alpha2.json`: checkpoint hashes, settings, and complete
+- `raw/baseline.json`, `raw/baseline_alpha2.json`, `raw/curriculum.json`,
+  `raw/curriculum_alpha2.json`, `raw/stratified.json`, and
+  `raw/stratified_alpha2.json`: checkpoint hashes, settings, and complete
   structured results.
 - `raw/parts/`: four GPU-partitioned intermediate result files.
 - `logs/`: evaluation logs for the four GPU jobs.

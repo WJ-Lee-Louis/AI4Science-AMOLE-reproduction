@@ -16,12 +16,21 @@ DIRECTION_LABELS = {
     "given_molecule": "Given Molecule",
     "given_text": "Given Text",
 }
-METHOD_ORDER = ["baseline", "curriculum", "stratified", "curriculum_alpha2"]
+METHOD_ORDER = [
+    "baseline",
+    "baseline_alpha2",
+    "curriculum",
+    "curriculum_alpha2",
+    "stratified",
+    "stratified_alpha2",
+]
 METHOD_LABELS = {
     "baseline": "baseline (alpha=1.0)",
+    "baseline_alpha2": "baseline (alpha=2.0)",
     "curriculum": "curriculum (alpha=1.0)",
-    "stratified": "stratified (alpha=1.0)",
     "curriculum_alpha2": "curriculum (alpha=2.0)",
+    "stratified": "stratified (alpha=1.0)",
+    "stratified_alpha2": "stratified (alpha=2.0)",
 }
 
 
